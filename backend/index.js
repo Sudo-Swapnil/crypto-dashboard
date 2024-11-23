@@ -53,6 +53,10 @@ async function fetchRedditPosts(keyword) {
     const posts = await fetchRedditPosts(keyword);
     console.log('Top posts for keyword:', keyword);
     posts.forEach(post => {
-        console.log(`- ${post.title} (URL: ${post.url})`);
-    });
+      console.log('---');
+      console.log(`- Title: ${post.title}`);
+      console.log(`- Description: ${post.selftext || '(No description available)'}`);
+      console.log(`- URL: ${post.url}`);
+      console.log('---');
+  });
 })();
