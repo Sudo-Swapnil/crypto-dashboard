@@ -13,7 +13,7 @@ import Settings from './pages/Settings';
 const App = () => {
   return (
     <Router>
-      <div className="flex h-screen">
+      <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <Navbar />

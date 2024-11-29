@@ -42,11 +42,11 @@ const Sidebar = () => {
     <Collapsible.Root
       open={!isCollapsed}
       onOpenChange={() => setIsCollapsed((prev) => !prev)}
-      className="flex h-screen relative"
+      className="flex relative min-h-screen"
     >
       {/* Sidebar */}
       <Collapsible.Content
-        className={`h-full custom-bg text-white transition-all duration-300 ${
+        className={`min-h-full custom-bg text-white transition-all duration-300 ${
           isCollapsed ? "w-16" : "w-64"
         }`}
       >
