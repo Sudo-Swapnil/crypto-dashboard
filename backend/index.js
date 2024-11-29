@@ -64,15 +64,12 @@
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios');
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
-// Route to get a list of cryptocurrencies
 
-
-
+//Search for Cryptocurrency
 app.get('/api/coingecko/search', async (req, res) => {
     const searchQuery = req.query.query
     const url = `https://api.coingecko.com/api/v3/search?query=${searchQuery}`;
@@ -86,7 +83,77 @@ app.get('/api/coingecko/search', async (req, res) => {
     }
   });
 
+
+  app.get('/api/coingecko/:coin', async (req, res) => {
+    const { coin } = req.params;
+    console.log(coin)
+    try {
+        // Fetch data from CoinGecko API
+        const response = await axios.get(
+            `https://api.coingecko.com/api/v3/coins/${coin}`,
+            {
+                params: {
+                    localization: false,
+                    tickers: false,
+                    community_data: false,
+                    developer_data: false,
+                    sparkline: false,
+                },
+            }
+        );
+
+        const data = response.data;
+
+        const filteredData = {
+            id: data.id,
+            symbol: data.symbol,
+            name: data.name,
+            categories: data.categories,
+            description: data.description.en,
+            homeurl: data.links.homepage[0],
+            whitepaper: data.links.whitepaper,
+            twitter: data.links.twitter_screen_name,
+            facebook: data.links.facebook_username,
+            github: data.links.repos_url.github[0],
+            icon: data.image.thumb,
+            votes_up: data.sentiment_votes_up_percentage,
+            votes_down: data.sentiment_votes_down_percentage,
+            market_cap_rank: data.market_data.market_cap_rank,
+            market_data: {
+                current_price: data.market_data.current_price.usd,
+                ath:data.market_data.ath.usd,
+                ath_change: data.market_data.ath_change_percentage.usd,
+                ath_date: data.market_data.ath_date.usd,
+                atl: data.market_data.atl.usd,
+                atl_change: data.market_data.atl_change_percentage.usd,
+                atl_date: data.market_data.atl_date.usd, 
+                market_cap: data.market_data.market_cap.usd,
+                fully_dilluted_value: data.market_data.fully_diluted_valuation.usd,
+                total_volume: data.market_data.total_volume.usd,
+                high_24h: data.market_data.high_24h.usd,
+                low_24h : data.market_data.low_24h.usd, 
+                price_change_24h : data.market_data.price_change_percentage_24h,
+                total_supply: data.market_data.total_supply,
+                max_supply: data.market_data.max_supply,
+                circulating_supply: data.market_data.circulating_supply
+            },
+        };
+
+        res.json(filteredData);
+    } catch (error) {
+        console.error('Error fetching coin data:', error.message);
+
+        res.status(error.response?.status || 500).json({
+            error: 'Unable to fetch coin data',
+            message: error.message,
+        });
+    }
+});
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
