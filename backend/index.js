@@ -1,67 +1,3 @@
-// const axios = require('axios');
-
-// // Reddit API credentials
-// const clientId = 'ex5jHV0CUz950ypMgRbmfw';
-// const clientSecret = 'D1yMKiq6vXINnBUFDVA2tobjVH3SKg';
-
-// // Function to get an access token
-// async function getAccessToken() {
-//     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-//     try {
-//         const response = await axios.post(
-//             'https://www.reddit.com/api/v1/access_token',
-//             new URLSearchParams({
-//                 grant_type: 'client_credentials',
-//             }),
-//             {
-//                 headers: {
-//                     Authorization: `Basic ${auth}`,
-//                     'Content-Type': 'application/x-www-form-urlencoded',
-//                 },
-//             }
-//         );
-//         return response.data.access_token;
-//     } catch (error) {
-//         console.error('Error fetching access token:', error.message);
-//         throw error;
-//     }
-// }
-
-// // Function to fetch posts by keyword
-// async function fetchRedditPosts(keyword) {
-//     try {
-//         const token = await getAccessToken();
-//         const response = await axios.get(
-//             `https://oauth.reddit.com/search?q=${encodeURIComponent(keyword)}&limit=10`,
-//             {
-//                 headers: {
-//                     Authorization: `Bearer ${token}`,
-//                     'User-Agent': 'RedditPostFetcher/1.0',
-//                 },
-//             }
-//         );
-//         return response.data.data.children.map(post => post.data);
-//     } catch (error) {
-//         console.error('Error fetching posts:', error.message);
-//         throw error;
-//     }
-// }
-
-// // Main function
-// (async () => {
-//     const keyword = 'crypto'; // Replace with your desired keyword
-//     const posts = await fetchRedditPosts(keyword);
-//     console.log('Top posts for keyword:', keyword);
-//     posts.forEach(post => {
-//       console.log('---');
-//       console.log(`- Title: ${post.title}`);
-//       console.log(`- Description: ${post.selftext || '(No description available)'}`);
-//       console.log(`- URL: ${post.url}`);
-//       console.log('---');
-//   });
-// })();
-
-
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios');
@@ -72,6 +8,79 @@ API_KEY = "CG-1qZC5UHpq8NxYAykhMaycGJd" //coingecko
 NEWS_API_KEY = "4e288366078447afba129da0c469cee9" 
 
 app.use(cors());
+
+// Reddit API credentials
+const clientId = 'ex5jHV0CUz950ypMgRbmfw';
+const clientSecret = 'D1yMKiq6vXINnBUFDVA2tobjVH3SKg';
+
+// Function to get an access token
+async function getAccessToken() {
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    try {
+        const response = await axios.post(
+            'https://www.reddit.com/api/v1/access_token',
+            new URLSearchParams({
+                grant_type: 'client_credentials',
+            }),
+            {
+                headers: {
+                    Authorization: `Basic ${auth}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            }
+        );
+        return response.data.access_token;
+    } catch (error) {
+        console.error('Error fetching access token:', error.message);
+        throw error;
+    }
+}
+
+// Function to fetch posts by keyword
+const fetchRedditPosts = async (keyword) => {
+  try {
+      const token = await getAccessToken();
+      const url = `https://oauth.reddit.com/search?q=${encodeURIComponent(keyword)}&limit=10`;
+      const headers = {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'RedditPostFetcher/1.0',
+      };
+
+      const { data } = await axios.get(url, { headers });
+
+      // Extract relevant information from posts
+      const posts = data.data.children.map(post => ({
+          source: post.data.subreddit_name_prefixed, // Subreddit where the post is published
+          author: post.data.author, // Author of the post
+          title: post.data.title, // Title of the post
+          description: post.data.selftext || '(No description available)', // Self-text or fallback
+          url: post.data.url, // URL to the post
+          image: post.data.thumbnail !== 'self' ? post.data.thumbnail : null, // Thumbnail if available
+          publishedAt: new Date(post.data.created_utc * 1000).toISOString(), // Convert UTC timestamp to ISO date
+          content: post.data.selftext, // Full content of the post (if available)
+      }));
+
+      return posts;
+  } catch (err) {
+      throw new Error(`Failed to fetch Reddit posts: ${err.message}`);
+  }
+};
+
+
+app.get('/api/reddit-posts/search', async (req, res) => {
+  const { query } = req.query; // Accept 'query' as the query parameter
+  const keyword = query || 'crypto'; // Default to 'crypto' if no query is provided
+
+  try {
+      const posts = await fetchRedditPosts(keyword); // Fetch posts based on the keyword
+      res.json({ posts }); // Respond with the posts in JSON format
+  } catch (error) {
+      console.error('Error fetching Reddit posts:', error.message);
+      res.status(500).json({ message: 'Error fetching Reddit posts' });
+  }
+});
+
+
 
 app.get('/api/news', async (req, res) => {
     const { query } = req.query; // Accept 'query' as a query parameter
