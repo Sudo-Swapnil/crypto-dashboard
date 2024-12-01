@@ -11,7 +11,7 @@ const News = () => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/news?query=${query}`);
+        const response = await fetch(`http://localhost:8080/api/news?query=${query}`);
         const data = await response.json();
         setArticles(data.articles.slice(0, 12)); // Limit to 12 articles
       } catch (error) {
