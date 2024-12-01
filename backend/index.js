@@ -61,7 +61,9 @@
 //   });
 // })();
 
-
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios');
@@ -70,10 +72,86 @@ const PORT = process.env.PORT || 8080;
 
 API_KEY = "CG-1qZC5UHpq8NxYAykhMaycGJd" //coingecko
 NEWS_API_KEY = "4e288366078447afba129da0c469cee9" 
-
+MONGO_URL = "mongodb+srv://rachita:Rachit2205@cluster0.ixegf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+const JWT_SECRET = 'your_jwt_secret';
 app.use(cors());
+app.use(express.json());
 
-app.get('/api/news', async (req, res) => {
+mongoose
+  .connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error(err));
+
+// User Schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: {type: String, required:true, unique:true},
+  password: { type: String, required: true },
+});
+
+const User = mongoose.model('User', userSchema);
+
+const authenticateToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access denied' });
+  
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ message: 'Invalid token' });
+      req.user = user;
+      next();
+    });
+  };
+
+
+// Routes
+app.post('/signup', async (req, res) => {
+    console.log(req)
+  const { username, email, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ username, email, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json({ message: 'User created successfully' });
+  } catch (err) {
+    if (err.code === 11000) {
+      res.status(400).json({ message: 'Username already exists' });
+    } else {
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: user._id,email: user.email, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ token });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.get('/api/news', authenticateToken, async (req, res) => {
     const { query } = req.query; // Accept 'query' as a query parameter
 
     const url = `https://newsapi.org/v2/everything`;
@@ -109,7 +187,7 @@ app.get('/api/news', async (req, res) => {
 });
 
 //Search for Cryptocurrency
-app.get('/api/coingecko/search', async (req, res) => {
+app.get('/api/coingecko/search',authenticateToken, async (req, res) => {
     const searchQuery = req.query.query
     const url = `https://api.coingecko.com/api/v3/search?query=${searchQuery}`;
   
@@ -123,7 +201,7 @@ app.get('/api/coingecko/search', async (req, res) => {
   });
 
 
-  app.get('/api/coingecko/:coin', async (req, res) => {
+  app.get('/api/coingecko/:coin',authenticateToken, async (req, res) => {
     const { coin } = req.params;
     console.log(coin)
     try {
@@ -191,7 +269,7 @@ app.get('/api/coingecko/search', async (req, res) => {
     }
 });
 
-app.get('/api/coingecko/:cryptoId/market_chart', async (req, res) => {
+app.get('/api/coingecko/:cryptoId/market_chart',authenticateToken, async (req, res) => {
     const { cryptoId } = req.params;
     const { days } = req.query; // Accept days as a query parameter
 
@@ -212,7 +290,7 @@ app.get('/api/coingecko/:cryptoId/market_chart', async (req, res) => {
     }
 });
 
-app.get('/api/coingecko/:cryptoId/ohlc', async (req, res) => {
+app.get('/api/coingecko/:cryptoId/ohlc',authenticateToken, async (req, res) => {
     const { cryptoId } = req.params;
     const { days } = req.query; // Accept days as a query parameter
 

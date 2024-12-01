@@ -23,18 +23,32 @@ const CryptoChart = ({ cryptoId }) => {
     useEffect(() => {
       const fetchChartData = async () => {
         setLoading(true);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          console.error('No token found. Please log in.');
+          setLoading(false);
+          return;
+        }
         try {
           let data = null;
+          const headers = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+          };
           if (selectedMetric === 'price') {
             // Fetch OHLC data for price
-            const ohlcResponse = await fetch(`http://localhost:8080/api/coingecko/${cryptoId}/ohlc?days=${duration}`);
+            const ohlcResponse = await fetch(`http://localhost:8080/api/coingecko/${cryptoId}/ohlc?days=${duration}`,
+              { method: 'GET', headers }
+            );
             if (!ohlcResponse.ok) {
               throw new Error(`HTTP error! status: ${ohlcResponse.status}`);
             }
             data = await ohlcResponse.json();
           } else {
             // Fetch market chart data for market cap
-            const marketChartResponse = await fetch(`http://localhost:8080/api/coingecko/${cryptoId}/market_chart?days=${duration}`);
+            const marketChartResponse = await fetch(`http://localhost:8080/api/coingecko/${cryptoId}/market_chart?days=${duration}`,
+              { method: 'GET', headers }
+            );
             if (!marketChartResponse.ok) {
               throw new Error(`HTTP error! status: ${marketChartResponse.status}`);
             }

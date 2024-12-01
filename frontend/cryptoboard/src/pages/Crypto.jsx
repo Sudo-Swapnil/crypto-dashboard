@@ -14,10 +14,27 @@ const CryptoData = () => {
       const fetchData = async () => {
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setError('You are not authorized. Please log in.');
+          setLoading(false);
+          return;
+        }
         try {
-          const response = await fetch(`http://localhost:8080/api/coingecko/${coin}`);
+          const response = await fetch(`http://localhost:8080/api/coingecko/${coin}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`, // Add the token to the Authorization header
+            },
+          });
           if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.statusText}`);
+            if (response.status === 401) {
+              setError('Unauthorized. Please log in again.');
+            } else {
+              setError('Failed to fetch data. Please try again later.');
+            }
+            return;
           }
           const result = await response.json();
           setData(result);
