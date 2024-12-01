@@ -71,7 +71,7 @@ const Sidebar = () => {
           to={item.to}
           className={({ isActive }) =>
             `flex items-center w-full p-2 rounded ${
-              isActive ? "text-blue-500 active-link-bg-color" : "text-white"
+              isActive ? "active-link-color active-link-bg-color" : "text-white"
             }`
           }
         >

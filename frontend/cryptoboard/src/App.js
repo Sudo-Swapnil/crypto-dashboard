@@ -9,6 +9,7 @@ import Markets from './pages/Markets';
 import News from './pages/News';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import CryptoData from "./pages/Crypto";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/markets" element={<Markets />} />
+              <Route path="/:coin" element={<CryptoData />} />
               <Route path="/news" element={<News />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />

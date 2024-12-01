@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 //TODO: Add Debouncing...
 const SearchBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);
+  const navigate = useNavigate();
 
   const handleSearch = async (e) => {
     const query = e.target.value;
@@ -21,6 +24,11 @@ const SearchBar = () => {
         setResults([]); // Handle error by clearing results
       }
     }
+  };
+
+  const handleItemClick = (coinId) => {
+    // Navigate to the coin's page
+    navigate(`/${coinId}`);
   };
 
   return (
@@ -54,6 +62,7 @@ const SearchBar = () => {
             <li
               key={item.id}
               className="px-4 py-2 text-white-700 hover:bg-gray-800 cursor-pointer"
+              onClick={() => handleItemClick(item.id)}
             >
               {item.name} ({item.symbol}) {/* Displaying symbol */}
             </li>

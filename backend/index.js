@@ -61,13 +61,52 @@
 //   });
 // })();
 
+
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+API_KEY = "CG-1qZC5UHpq8NxYAykhMaycGJd" //coingecko
+NEWS_API_KEY = "4e288366078447afba129da0c469cee9" 
+
 app.use(cors());
+
+app.get('/api/news', async (req, res) => {
+    const { query } = req.query; // Accept 'query' as a query parameter
+
+    const url = `https://newsapi.org/v2/everything`;
+
+    try {
+        const response = await axios.get(url, {
+            params: {
+                q: query || 'crypto', // Default to 'bitcoin' if no query is provided
+                apiKey: NEWS_API_KEY,
+                searchIn: 'title',
+                language: 'en', // Filter for English articles
+                sortBy: 'publishedAt', // Sort by latest articles
+            },
+        });
+
+        // Extract relevant information from articles
+        const articles = response.data.articles.map(article => ({
+            source: article.source.name,
+            author: article.author,
+            title: article.title,
+            description: article.description,
+            url: article.url,
+            image: article.urlToImage,
+            publishedAt: article.publishedAt,
+            content: article.content,
+        }));
+
+        res.json({ articles }); // Send the formatted articles as JSON
+    } catch (error) {
+        console.error('Error fetching news:', error);
+        res.status(500).json({ message: 'Error fetching news data' });
+    }
+});
 
 //Search for Cryptocurrency
 app.get('/api/coingecko/search', async (req, res) => {
@@ -121,6 +160,7 @@ app.get('/api/coingecko/search', async (req, res) => {
             market_cap_rank: data.market_data.market_cap_rank,
             market_data: {
                 current_price: data.market_data.current_price.usd,
+                current_price_btc : data.market_data.current_price.btc, 
                 ath:data.market_data.ath.usd,
                 ath_change: data.market_data.ath_change_percentage.usd,
                 ath_date: data.market_data.ath_date.usd,
@@ -133,6 +173,7 @@ app.get('/api/coingecko/search', async (req, res) => {
                 high_24h: data.market_data.high_24h.usd,
                 low_24h : data.market_data.low_24h.usd, 
                 price_change_24h : data.market_data.price_change_percentage_24h,
+                price_change_btc_24h: data.market_data.price_change_percentage_24h_in_currency.btc, 
                 total_supply: data.market_data.total_supply,
                 max_supply: data.market_data.max_supply,
                 circulating_supply: data.market_data.circulating_supply
@@ -150,6 +191,47 @@ app.get('/api/coingecko/search', async (req, res) => {
     }
 });
 
+app.get('/api/coingecko/:cryptoId/market_chart', async (req, res) => {
+    const { cryptoId } = req.params;
+    const { days } = req.query; // Accept days as a query parameter
+
+    const url = `https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?x_cg_demo_api_key=${API_KEY}`;
+
+    try {
+        const response = await axios.get(url, {
+            params: {
+                vs_currency: 'usd',
+                days: days || 1 // Default to 1 day if no value is provided
+            }
+        });
+
+        res.json(response.data); // Send the market chart data as JSON
+    } catch (error) {
+        console.error('Error fetching market chart data:', error);
+        res.status(500).json({ message: 'Error fetching market chart data' });
+    }
+});
+
+app.get('/api/coingecko/:cryptoId/ohlc', async (req, res) => {
+    const { cryptoId } = req.params;
+    const { days } = req.query; // Accept days as a query parameter
+
+    const url = `https://api.coingecko.com/api/v3/coins/${cryptoId}/ohlc?x_cg_demo_api_key=${API_KEY}`;
+
+    try {
+        const response = await axios.get(url, {
+            params: {
+                vs_currency: 'usd',
+                days: days || 1 // Default to 1 day if no value is provided
+            }
+        });
+
+        res.json(response.data); // Send the OHLC data as JSON
+    } catch (error) {
+        console.error('Error fetching OHLC data:', error);
+        res.status(500).json({ message: 'Error fetching OHLC data' });
+    }
+});
 
 // Start the server
 app.listen(PORT, () => {

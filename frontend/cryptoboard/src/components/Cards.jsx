@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import ColorThief from "color-thief-browser";
 
-const Card = ({ imageSrc, subtitle, title }) => {
+const Card = ({id,imageSrc, subtitle, title }) => {
   const [dominantColor, setDominantColor] = useState("rgb(255, 255, 255)");
   const navigate = useNavigate();  
   useEffect(() => {
@@ -14,16 +14,17 @@ const Card = ({ imageSrc, subtitle, title }) => {
       const colorThief = new ColorThief();
       const dominantColor = colorThief.getColor(img); // Extract dominant color
       dominantColor.push(0.6)
-      console.log(dominantColor)
+    //   console.log(dominantColor)
       setDominantColor(`rgba(${dominantColor.join(",")})`);
     };
   }, [imageSrc]);
-  
+
   const gradient = `radial-gradient(circle at top left, ${dominantColor} 30%, rgb(28,28,37) 50%)`;
   const handleCardClick = () => {
-    navigate(`/${subtitle}`); // Navigate to the /subtitle path
+    console.log(id)
+    navigate(`/${id}`); // Navigate to the /subtitle path
   };
-  console.log(gradient)
+//   console.log(gradient)
   return (
     <div
       className="relative w-full max-w-sm mx-auto rounded-lg shadow-md overflow-visible"
