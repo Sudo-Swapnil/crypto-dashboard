@@ -95,6 +95,7 @@ app.get('/api/news', async (req, res) => {
                 searchIn: 'title',
                 language: 'en', // Filter for English articles
                 sortBy: 'publishedAt', // Sort by latest articles
+                sources: 'bloomberg,the-wall-street-journal,new-york-magazine'
             },
         });
 
