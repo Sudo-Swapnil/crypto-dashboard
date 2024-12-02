@@ -1,66 +1,3 @@
-// const axios = require('axios');
-
-// // Reddit API credentials
-// const clientId = 'ex5jHV0CUz950ypMgRbmfw';
-// const clientSecret = 'D1yMKiq6vXINnBUFDVA2tobjVH3SKg';
-
-// // Function to get an access token
-// async function getAccessToken() {
-//     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-//     try {
-//         const response = await axios.post(
-//             'https://www.reddit.com/api/v1/access_token',
-//             new URLSearchParams({
-//                 grant_type: 'client_credentials',
-//             }),
-//             {
-//                 headers: {
-//                     Authorization: `Basic ${auth}`,
-//                     'Content-Type': 'application/x-www-form-urlencoded',
-//                 },
-//             }
-//         );
-//         return response.data.access_token;
-//     } catch (error) {
-//         console.error('Error fetching access token:', error.message);
-//         throw error;
-//     }
-// }
-
-// // Function to fetch posts by keyword
-// async function fetchRedditPosts(keyword) {
-//     try {
-//         const token = await getAccessToken();
-//         const response = await axios.get(
-//             `https://oauth.reddit.com/search?q=${encodeURIComponent(keyword)}&limit=10`,
-//             {
-//                 headers: {
-//                     Authorization: `Bearer ${token}`,
-//                     'User-Agent': 'RedditPostFetcher/1.0',
-//                 },
-//             }
-//         );
-//         return response.data.data.children.map(post => post.data);
-//     } catch (error) {
-//         console.error('Error fetching posts:', error.message);
-//         throw error;
-//     }
-// }
-
-// // Main function
-// (async () => {
-//     const keyword = 'crypto'; // Replace with your desired keyword
-//     const posts = await fetchRedditPosts(keyword);
-//     console.log('Top posts for keyword:', keyword);
-//     posts.forEach(post => {
-//       console.log('---');
-//       console.log(`- Title: ${post.title}`);
-//       console.log(`- Description: ${post.selftext || '(No description available)'}`);
-//       console.log(`- URL: ${post.url}`);
-//       console.log('---');
-//   });
-// })();
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -69,6 +6,7 @@ const cors = require("cors");
 const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 8080;
+
 
 API_KEY = "CG-1qZC5UHpq8NxYAykhMaycGJd" //coingecko
 NEWS_API_KEY = "4e288366078447afba129da0c469cee9" 
@@ -91,6 +29,22 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+const portfolioSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    holdings: [
+      {
+        coinId: { type: String, required: true }, // CoinGecko coin ID
+        name: { type: String, required: true },  // e.g., Bitcoin
+        symbol: { type: String, required: true }, // e.g., BTC
+        quantity: { type: Number, required: true },
+        purchasePrice: { type: Number, required: true },
+        purchaseDate: { type: Date, default: Date.now },
+      },
+    ],
+  });
+  
+  const Portfolio = mongoose.model('Portfolio', portfolioSchema);
+
 const authenticateToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Access denied' });
@@ -105,7 +59,6 @@ const authenticateToken = (req, res, next) => {
 
 // Routes
 app.post('/signup', async (req, res) => {
-    console.log(req)
   const { username, email, password } = req.body;
 
   if (!username || !password) {
@@ -203,24 +156,22 @@ app.get('/api/coingecko/search',authenticateToken, async (req, res) => {
 
   app.get('/api/coingecko/:coin',authenticateToken, async (req, res) => {
     const { coin } = req.params;
-    console.log(coin)
     try {
         // Fetch data from CoinGecko API
         const response = await axios.get(
-            `https://api.coingecko.com/api/v3/coins/${coin}`,
+            `https://api.coingecko.com/api/v3/coins/${coin}?x_cg_demo_api_key=${API_KEY}`,
             {
                 params: {
                     localization: false,
                     tickers: false,
                     community_data: false,
                     developer_data: false,
-                    sparkline: false,
+                    sparkline: true,
                 },
             }
         );
 
         const data = response.data;
-
         const filteredData = {
             id: data.id,
             symbol: data.symbol,
@@ -232,10 +183,11 @@ app.get('/api/coingecko/search',authenticateToken, async (req, res) => {
             twitter: data.links.twitter_screen_name,
             facebook: data.links.facebook_username,
             github: data.links.repos_url.github[0],
-            icon: data.image.thumb,
+            icon: data.image.small,
             votes_up: data.sentiment_votes_up_percentage,
             votes_down: data.sentiment_votes_down_percentage,
             market_cap_rank: data.market_data.market_cap_rank,
+            sparkline: data.market_data.sparkline_7d.price,
             market_data: {
                 current_price: data.market_data.current_price.usd,
                 current_price_btc : data.market_data.current_price.btc, 
@@ -310,6 +262,132 @@ app.get('/api/coingecko/:cryptoId/ohlc',authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Error fetching OHLC data' });
     }
 });
+
+app.post('/api/portfolio', authenticateToken, async (req, res) => {
+    const { coinId, name, symbol, quantity, purchasePrice } = req.body;
+  
+    if (!coinId || !quantity || !purchasePrice) {
+      return res.status(400).json({ message: 'Coin ID, quantity, and purchase price are required' });
+    }
+  
+    try {
+      let portfolio = await Portfolio.findOne({ userId: req.user.id });
+        
+      if (!portfolio) {
+        portfolio = new Portfolio({
+          userId: req.user.id,
+          holdings: [{ coinId, name, symbol, quantity, purchasePrice }],
+        });
+      } else {
+        portfolio.holdings.push({ coinId, name, symbol, quantity, purchasePrice });
+      }
+  
+      await portfolio.save();
+      res.status(201).json({ message: 'Holding added successfully', portfolio });
+    } catch (error) {
+      console.error('Error adding holding:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+
+  app.get('/api/portfolio', authenticateToken, async (req, res) => {
+    try {
+      const portfolio = await Portfolio.findOne({ userId: req.user.id });
+  
+      if (!portfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+  
+      res.status(200).json(portfolio);
+    } catch (error) {
+      console.error('Error fetching portfolio:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.put('/api/portfolio/:coinId', authenticateToken, async (req, res) => {
+    const { coinId } = req.params;
+    const { quantity, purchasePrice } = req.body;
+  
+    try {
+      const portfolio = await Portfolio.findOne({ userId: req.user.id });
+  
+      if (!portfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+  
+      const holding = portfolio.holdings.find((h) => h.coinId === coinId);
+  
+      if (!holding) {
+        return res.status(404).json({ message: 'Holding not found' });
+      }
+  
+      holding.quantity = quantity || holding.quantity;
+      holding.purchasePrice = purchasePrice || holding.purchasePrice;
+  
+      await portfolio.save();
+      res.status(200).json({ message: 'Holding updated successfully', portfolio });
+    } catch (error) {
+      console.error('Error updating holding:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+
+  app.delete('/api/portfolio/:coinId', authenticateToken, async (req, res) => {
+    const { coinId } = req.params;
+  
+    try {
+      const portfolio = await Portfolio.findOne({ userId: req.user.id });
+  
+      if (!portfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+  
+      portfolio.holdings = portfolio.holdings.filter((h) => h.coinId !== coinId);
+  
+      await portfolio.save();
+      res.status(200).json({ message: 'Holding deleted successfully', portfolio });
+    } catch (error) {
+      console.error('Error deleting holding:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+
+  app.get('/api/portfolio/value', authenticateToken, async (req, res) => {
+    try {
+      const portfolio = await Portfolio.findOne({ userId: req.user.id });
+  
+      if (!portfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+  
+      const coinIds = portfolio.holdings.map((h) => h.coinId).join(',');
+      const response = await axios.get(
+       `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd`
+      );
+  
+      const prices = response.data;
+      console.log("Checking fetched prices", prices)
+      const totalValue = portfolio.holdings.reduce((acc, holding) => {
+        return acc + (holding.quantity * prices[holding.coinId]?.usd || 0);
+      }, 0);
+
+      const totalPurchasedValue = portfolio.holdings.reduce((acc, holding) => {
+        return acc + (holding.quantity * holding.purchasePrice || 0);
+      }, 0);
+
+  
+      res.status(200).json({ totalValue, totalPurchasedValue, holdings: portfolio.holdings });
+    } catch (error) {
+      console.error('Error calculating portfolio value:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+
 
 // Start the server
 app.listen(PORT, () => {

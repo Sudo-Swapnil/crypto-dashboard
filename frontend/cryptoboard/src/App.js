@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 
 // Pages
-import Dashboard from './pages/Dashboard';
+import PortfolioPage from './pages/Dashboard';
 import Markets from './pages/Markets';
 import News from './pages/News';
 import Profile from './pages/Profile';
@@ -45,7 +45,15 @@ const App = () => {
                   path="/"
                   element={
                     <ProtectedRoute isAuthenticated={isAuthenticated}>
-                      <Dashboard />
+                      <PortfolioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                 <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute isAuthenticated={isAuthenticated}>
+                      <PortfolioPage />
                     </ProtectedRoute>
                   }
                 />
