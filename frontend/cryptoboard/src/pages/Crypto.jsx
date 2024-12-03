@@ -83,10 +83,18 @@ const CryptoData = () => {
         const result = await response.json();
         console.log(result)
         setPortfolioMessage("Added to portfolio successfully!");
+
+        setTimeout(() => {
+          setPortfolioMessage(null);
+        }, 3000);
+
         setIsModalOpen(false);
         setQuantity(0)
       } catch (error) {
         setPortfolioMessage("Failed to add to portfolio. Please try again.");
+        setTimeout(() => {
+          setPortfolioMessage(null);
+        }, 3000);
       }
     };
   

@@ -7,10 +7,11 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, Title, Tooltip, Legend
 
 const PortfolioPage = () => {
   const [portfolio, setPortfolio] = useState(null);
-  const [error, setError] = useState('');
   const [coinData, setCoinData] = useState({});
-  const [currentIndex, setCurrentIndex] = useState(0); // Track current index for visible holdings
-  const visibleHoldingsCount = 2; // Number of holdings to display at a time
+  const [isLoading, setIsLoading] = useState(true); // Add a loading state
+  const [error, setError] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const visibleHoldingsCount = 2;
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -28,7 +29,8 @@ const PortfolioPage = () => {
         const portfolioData = await response.json();
         setPortfolio(portfolioData);
 
-        for (let holding of portfolioData.holdings) {
+        // Fetch coin data for all holdings
+        const coinDataPromises = portfolioData.holdings.map(async (holding) => {
           const coinResponse = await fetch(`http://localhost:8080/api/coingecko/${holding.coinId}`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('authToken')}`,
@@ -40,13 +42,23 @@ const PortfolioPage = () => {
           }
 
           const coinDetails = await coinResponse.json();
-          setCoinData((prevData) => ({
-            ...prevData,
-            [holding.coinId]: coinDetails,
-          }));
-        }
+          return { coinId: holding.coinId, details: coinDetails };
+        });
+
+        // Wait for all coin data to be fetched
+        const fetchedCoinData = await Promise.all(coinDataPromises);
+
+        // Update state with fetched coin data
+        const updatedCoinData = fetchedCoinData.reduce((acc, { coinId, details }) => {
+          acc[coinId] = details;
+          return acc;
+        }, {});
+
+        setCoinData(updatedCoinData);
+        setIsLoading(false); // Mark loading as complete
       } catch (err) {
         setError('Failed to fetch portfolio data or coin details');
+        setIsLoading(false); // Even in case of error, stop loading
       }
     };
 
@@ -67,14 +79,18 @@ const PortfolioPage = () => {
     ],
   });
 
-  if (!portfolio) {
+  if (isLoading) {
     return <div className="text-center py-10">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">{error}</div>;
   }
 
   const { totalValue, totalPurchasedValue } = portfolio;
   const change = totalValue - totalPurchasedValue;
   const changePercent = ((change / totalPurchasedValue) * 100).toFixed(2);
-  
+
   const cryptoList = Object.entries(coinData).map(([cryptoId, details]) => ({
     cryptoId,
     name: details.name,
@@ -130,16 +146,6 @@ const PortfolioPage = () => {
           <div className="flex space-x-4 overflow-x-scroll no-scrollbar">
             {visibleHoldings.map((holding) => {
               const coinDetails = coinData[holding.coinId];
-              if (!coinDetails)
-                return (
-                  <div
-                    key={holding.coinId}
-                    className="flex-shrink-0 w-1/2 p-4 text-center"
-                  >
-                    Loading...
-                  </div>
-                );
-
               return (
                 <div
                   key={holding.coinId}
@@ -203,19 +209,19 @@ const PortfolioPage = () => {
             <button
               onClick={handleNext}
               disabled={currentIndex + visibleHoldingsCount >= portfolio.holdings.length}
-              className="p-2  text-white rounded-full disabled:opacity-0"
+              className="p-2 text-white rounded-full disabled:opacity-0"
             >
               ➡️
             </button>
           </div>
         </div>
       </div>
-      <div className='mt-6 w-2/3 p-6'>
-      <OhlcChart cryptoList={cryptoList}
-      />
+      <div className="w-2/3 mt-6 p-6">
+        <OhlcChart cryptoList={cryptoList} />
       </div>
     </div>
   );
 };
 
 export default PortfolioPage;
+

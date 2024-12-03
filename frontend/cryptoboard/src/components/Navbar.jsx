@@ -40,16 +40,12 @@ const Navbar = ({onLogout}) => {
             <p className="text-xs text-gray-400">{userInfo.email || "No email"}</p>
           </div>
 
-          {/* Dropdown Icon */}
-          <button aria-label="Profile Options" className="p-2">
+          <button onClick={onLogout} className="p-2">
           <img
-      src="/icons/three-dots.svg" 
-      alt="Toggle Icon"
+      src="/icons/logout.svg" 
+      alt="Logout Icon"
       className="h-6 w-6"
     />
-          </button>
-          <button onClick={onLogout} className="bg-red-500 px-4 py-2 rounded">
-        Logout
       </button>
         </div>
       </div>

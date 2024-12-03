@@ -18,7 +18,7 @@ const OhlcChart = ({ cryptoList }) => {
   const [loading, setLoading] = useState(false);
   const [duration, setDuration] = useState('7'); // Default to 7 days
   const chartRef = useRef(null);
-
+  console.log("Debugging",selectedCrypto)
   // Fetch OHLC data
   useEffect(() => {
     const fetchChartData = async () => {

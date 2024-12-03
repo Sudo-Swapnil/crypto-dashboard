@@ -24,18 +24,6 @@ const Sidebar = () => {
       icon_active : "/active_icons/news.svg", 
       to: "/news",
     },
-    {
-      label: "Profile",
-      icon: "/icons/profile.svg",
-      icon_active : "/active_icons/profile.svg", 
-      to: "/profile",
-    },
-    {
-      label: "Settings",
-      icon: "/icons/settings.svg",
-      icon_active :"/active_icons/settings.svg", 
-      to: "/settings",
-    },
   ];
 
   return (
