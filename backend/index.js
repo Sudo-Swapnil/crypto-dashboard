@@ -18,7 +18,3 @@ app.use('/api/auth', authRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/coingecko', coinGeckoRoutes);
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
