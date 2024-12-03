@@ -1,7 +1,18 @@
-import React from "react";
-// import * as NavigationMenu from "@radix-ui/react-navigation-menu";
+import React , {useState,useEffect} from "react";
+import {jwtDecode} from "jwt-decode";
 
-const Navbar = () => {
+const Navbar = ({onLogout}) => {
+  const [userInfo, setUserInfo] = useState({ username: "", email: "" });
+
+  useEffect(() => {
+    // Fetch and decode the token from localStorage
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUserInfo({ username: decoded.username, email: decoded.email });
+    }
+  }, []);
+
   return (
     <header className="custom-bg text-white">
       <div className="container ml-auto mr-0 px-4 py-3 flex justify-end items-center space-x-3">
@@ -25,18 +36,17 @@ const Navbar = () => {
 
           {/* Username and Email */}
           <div>
-            <p className="text-sm font-semibold">John Doe</p>
-            <p className="text-xs text-gray-400">john.doe@example.com</p>
+            <p className="text-sm font-semibold">{userInfo.username || "Guest"}</p>
+            <p className="text-xs text-gray-400">{userInfo.email || "No email"}</p>
           </div>
 
-          {/* Dropdown Icon */}
-          <button aria-label="Profile Options" className="p-2">
+          <button onClick={onLogout} className="p-2">
           <img
-      src="/icons/three-dots.svg" 
-      alt="Toggle Icon"
+      src="/icons/logout.svg" 
+      alt="Logout Icon"
       className="h-6 w-6"
     />
-          </button>
+      </button>
         </div>
       </div>
     </header>

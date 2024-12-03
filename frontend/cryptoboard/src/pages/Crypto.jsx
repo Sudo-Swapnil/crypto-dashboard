@@ -9,15 +9,35 @@ const CryptoData = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [quantity, setQuantity] = useState(0); // State to hold quantity
+    const [portfolioMessage, setPortfolioMessage] = useState(null); // State to handle response message
+    const [isModalOpen, setIsModalOpen] = useState(false);
   
     useEffect(() => {
       const fetchData = async () => {
         setLoading(true);
         setError(null);
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setError('You are not authorized. Please log in.');
+          setLoading(false);
+          return;
+        }
         try {
-          const response = await fetch(`http://localhost:8080/api/coingecko/${coin}`);
+          const response = await fetch(`http://localhost:8080/api/coingecko/${coin}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`, // Add the token to the Authorization header
+            },
+          });
           if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.statusText}`);
+            if (response.status === 401) {
+              setError('Unauthorized. Please log in again.');
+            } else {
+              setError('Failed to fetch data. Please try again later.');
+            }
+            return;
           }
           const result = await response.json();
           setData(result);
@@ -30,6 +50,54 @@ const CryptoData = () => {
   
       fetchData();
     }, [coin]);
+
+    const handleAddToPortfolio = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("You are not authorized. Please log in.");
+        return;
+      }
+  
+      try {
+        const response = await fetch(`http://localhost:8080/api/portfolio`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            coinId: coin,
+            name: data.name,
+            symbol: data.symbol,
+            quantity: parseFloat(quantity),
+            purchasePrice: data.market_data.current_price,
+          }),
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.json();
+          setPortfolioMessage(errorData.message || "Failed to add to portfolio.");
+          return;
+        }
+  
+        const result = await response.json();
+        console.log(result)
+        setPortfolioMessage("Added to portfolio successfully!");
+
+        setTimeout(() => {
+          setPortfolioMessage(null);
+        }, 3000);
+
+        setIsModalOpen(false);
+        setQuantity(0)
+      } catch (error) {
+        setPortfolioMessage("Failed to add to portfolio. Please try again.");
+        setTimeout(() => {
+          setPortfolioMessage(null);
+        }, 3000);
+      }
+    };
+  
   
     if (loading) return <p>Loading...</p>;
     if (error) return <p>{error}</p>;
@@ -59,7 +127,7 @@ const CryptoData = () => {
       </div>
     
           {/* Bottom Row */}
-          <div className="flex items-center space-x-4" style={{ marginBottom: '40px' }}>
+          <div className="flex items-center space-x-4 mb-2">
             {/* Current Price */}
             <span className="font-semibold text-4xl text-white-700">
               ${data.market_data.current_price?.toLocaleString()}
@@ -69,6 +137,44 @@ const CryptoData = () => {
             data = {data.market_data.price_change_24h}
             />
           </div>
+          <div className="flex flex-col space-y-4">
+          
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="active-link-bg-color text-white px-2 py-2 rounded-full"
+          >
+            Add to Portfolio
+          </button>
+          {portfolioMessage && <p className="text-green-500">{portfolioMessage}</p>}
+          {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="custom-bg p-6 rounded shadow-lg space-y-4 w-80">
+            <h2 className="text-xl font-bold">Enter Quantity</h2>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="border p-2 w-full rounded text-black"
+              placeholder="Enter quantity"
+            />
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddToPortfolio}
+                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        </div>
           <Bullet
          title = 'Market Cap'
          data = {data.market_data.market_cap}
@@ -264,8 +370,7 @@ const CryptoData = () => {
             <p>{data.description}</p>
           </div>
         </div>
-        </div>
-        
+        </div> 
         
       );
   };
