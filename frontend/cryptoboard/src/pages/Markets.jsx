@@ -53,7 +53,7 @@ const Markets = () => {
             key={index}
             id = {crypto.id}
             imageSrc={crypto.imageSrc}
-            subti tle={crypto.subtitle}
+            subtitle={crypto.subtitle}
             title={crypto.title}
           />
         ))}
