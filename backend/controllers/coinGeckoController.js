@@ -5,7 +5,6 @@ const { COINGECKO_API_URL, API_KEY } = process.env;
 const searchCoins = async (req, res) => {
     const searchQuery = req.query.query;
     const url = `${COINGECKO_API_URL}/search?query=${searchQuery}`;
-
     try {
         const response = await axios.get(url);
         res.json(response.data); // Send the search data as JSON

@@ -15,8 +15,13 @@ const SearchBar = () => {
       setResults([]);
     } else {
       try {
-        // Fetch results based on search query
-        const response = await fetch(`http://localhost:8080/api/coingecko/search?query=${query}`);
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`http://localhost:8080/api/coingecko/search?query=${query}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
         setResults(data.coins || []);
       } catch (error) {
