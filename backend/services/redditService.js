@@ -25,20 +25,35 @@ async function getAccessToken() {
   }
 }
 
-const fetchRedditPosts = async (query) => {
-  const token = await getAccessToken();
 
-  const response = await axios.get(`https://www.reddit.com/r/cryptocurrency/search.json?q=${query}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+const fetchRedditPosts = async (keyword) => {
+  try {
+      const token = await getAccessToken();
+      const url = `https://oauth.reddit.com/search?q=${encodeURIComponent(keyword)}&limit=10`;
+      const headers = {
+          Authorization: `Bearer ${token}`,
+          'User-Agent': 'RedditPostFetcher/1.0',
+      };
 
-  return response.data.data.children.map(post => ({
-    title: post.data.title,
-    url: post.data.url,
-    score: post.data.score,
-  }));
+      const { data } = await axios.get(url, { headers });
+
+      // Extract relevant information from posts
+      const articles = data.data.children.map(post => ({
+          source: post.data.subreddit_name_prefixed, // Subreddit where the post is published
+          author: post.data.author, // Author of the post
+          title: post.data.title, // Title of the post
+          description: post.data.selftext || '(No description available)', // Self-text or fallback
+          url: post.data.url, // URL to the post
+          image: post.data.thumbnail !== 'self' ? post.data.thumbnail : null, // Thumbnail if available
+          publishedAt: new Date(post.data.created_utc * 1000).toISOString(), // Convert UTC timestamp to ISO date
+          content: post.data.selftext, // Full content of the post (if available)
+      }));
+
+      return articles;
+  } catch (err) {
+      throw new Error(`Failed to fetch Reddit posts: ${err.message}`);
+  }
 };
+
 
 module.exports = fetchRedditPosts;
