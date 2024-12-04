@@ -170,4 +170,21 @@ const News = () => {
   );
 };
 
+// Styling for side-by-side layout
+
+const styles = {
+  newsList: {
+    display: 'grid',  // Use grid for better control over layout
+    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',  // This ensures the items adjust based on screen size
+    gap: '10px',  // Set gap between items (adjust this as needed)
+    margin: 0,
+    padding: 0,
+  },
+  newsItem: {
+    borderRadius: '8px',  // Optional: Adds rounded corners
+    overflow: 'hidden',  // Optional: Ensures content is clipped to the container's shape
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',  // Optional: Adds subtle shadow to news items
+  },
+};
+
 export default News;
