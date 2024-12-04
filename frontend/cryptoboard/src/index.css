@@ -19,3 +19,23 @@ body {
   .active-link-bg-color {
     background-color: #062141;
   }
+
+  .active-link-color {
+    color: #1A71FF
+  }
+
+  .custom-bg-red {
+    background-color: rgba(238, 110, 110, 0.3);
+  }  
+  
+  .custom-red {
+    color :  rgb(238, 110, 110);
+  }
+
+  .custom-bg-green {
+    background-color: rgba(38,171,95,0.3);
+  }
+
+  .custom-green{
+    color: rgb(38,171,95)
+  }
