@@ -3,11 +3,12 @@ FROM node:18
 
 WORKDIR /app
 
-# Copy dependencies
+# Copy and install dependencies
 COPY package.json package-lock.json ./
 RUN npm install
+RUN npm rebuild bcrypt --build-from-source
 
-# Copy the rest of the app
+# Copy the application code
 COPY . .
 
 EXPOSE 8080

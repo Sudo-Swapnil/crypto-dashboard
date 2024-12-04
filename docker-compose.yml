@@ -1,24 +1,46 @@
-version: '3.8'
+version: '3.9'
 
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - PORT=8080
+      - MONGO_URI=mongodb://mongo:27017/mydatabase
+    depends_on:
+      - mongo
+    networks:
+      - mern-net
     volumes:
       - ./backend:/app
-    environment:
-      - NODE_ENV=development
 
   frontend:
     build:
       context: ./frontend/cryptoboard
-      dockerfile: Dockerfile
     ports:
       - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - mern-net
     volumes:
       - ./frontend:/app
-    environment:
-      - NODE_ENV=development
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mern-net
+
+networks:
+  mern-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
