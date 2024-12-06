@@ -23,7 +23,7 @@ Run the following command to build and start all services:
 
 ```bash
 docker-compose up --build
-
+```
 
 This will:
 
@@ -31,24 +31,26 @@ Build the backend and frontend Docker images.
 Start the backend, frontend, and MongoDB services.
 Expose the services on their respective ports.
 
-2. Access the Application
+### 2. Access the Application
 
 Frontend: http://localhost:3000
 Backend: http://localhost:8080
 MongoDB: Available on port 27017.
 
-3. Stop the Application
+### 3. Stop the Application
 
 To stop all running services:
 
+```bash
 docker-compose down
+```
 
 
+---
 
+## Services Overview 
 
- - Services Overview 
-
-1. Backend
+### 1. Backend
 
 Image: Built from the backend/Dockerfile.
 Port: 8080
@@ -57,14 +59,16 @@ PORT: The port on which the server runs.
 MONGO_URI: The MongoDB connection URI.
 Volume: Mounts the backend directory to /app for live updates.
 
-2. Frontend
+### 2. Frontend
 
 Image: Built from the frontend/cryptoboard/Dockerfile.
 Port: 3000 (mapped to Nginx's 80).
 Volume: Mounts the frontend directory to /app for live updates.
 
-3. MongoDB
+### 3. MongoDB
 
 Image: mongo:5.0
 Port: 27017
 Volume: Persists data in mongo_data volume.
+
+---
