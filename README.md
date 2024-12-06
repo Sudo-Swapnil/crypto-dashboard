@@ -36,6 +36,7 @@ Expose the services on their respective ports.
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
 - MongoDB: Available on port 27017.
+- Dummy Login Credentials : username: "david" , password: "password"
 
 ### 3. Stop the Application
 
@@ -64,7 +65,6 @@ Volume: Mounts the backend directory to /app for live updates.
 Image: Built from the frontend/cryptoboard/Dockerfile.
 Port: 3000 (mapped to Nginx's 80).
 Volume: Mounts the frontend directory to /app for live updates.
-Dummy Login Credentials : username: "david" , password: "password"
 
 ### 3. MongoDB
 
