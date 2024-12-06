@@ -1,26 +1,29 @@
+# CryptoBoard Deployment Configuration
+
 This repository contains the configuration for deploying the CryptoBoard application, a MERN stack project, using Docker and Docker Compose. The stack includes:
 
-Backend - A Node.js server.
-Frontend - A React.js application served via Nginx.
-MongoDB - A MongoDB instance for database storage.
+- **Backend**: A Node.js server.
+- **Frontend**: A React.js application served via Nginx.
+- **MongoDB**: A MongoDB instance for database storage.
 
+---
 
+## Prerequisites
 
-- Prerequisites
+- **Docker**: Ensure you have Docker installed.
+- **Docker Compose**: Verify that Docker Compose is installed.
 
-Docker: Ensure you have Docker installed. 
-Docker Compose: Verify that Docker Compose is installed. 
+---
 
+## Usage
 
+### 1. Build and Start the Application
 
-
-
-- Usage
-
-1. Build and Start the Application
 Run the following command to build and start all services:
 
+```bash
 docker-compose up --build
+
 
 This will:
 
