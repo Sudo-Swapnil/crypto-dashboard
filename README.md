@@ -6,13 +6,16 @@ MongoDB - A MongoDB instance for database storage.
 
 
 
-- - Prerequisites - -
+- Prerequisites
 
 Docker: Ensure you have Docker installed. 
 Docker Compose: Verify that Docker Compose is installed. 
 
 
-- - Usage - -
+
+
+
+- Usage
 
 1. Build and Start the Application
 Run the following command to build and start all services:
@@ -39,7 +42,8 @@ docker-compose down
 
 
 
- - - Services Overview - -
+
+ - Services Overview 
 
 1. Backend
 
