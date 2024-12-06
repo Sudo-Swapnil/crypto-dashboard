@@ -33,9 +33,9 @@ Expose the services on their respective ports.
 
 ### 2. Access the Application
 
-Frontend: http://localhost:3000
-Backend: http://localhost:8080
-MongoDB: Available on port 27017.
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8080
+- MongoDB: Available on port 27017.
 
 ### 3. Stop the Application
 
